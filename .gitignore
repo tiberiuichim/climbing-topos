@@ -1,0 +1,18 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# browser / export leftovers
+*.pdf.tmp
+*.pdf.log
+chrome-error://
+headless_profile/
+
+# large raw scans belong in assets/ only when they are the topo's source material
+assets/tmp/
+*.psd
+*.kra

@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Topo Vectorial A4: Turnu Babilonului & Canguru Șchiop — Vadu Crișului</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --babilon-blue: #1d4ed8;
+      --canguru-red: #dc2626;
+      --belay-red: #dc2626;
+      --crest-blue: #0284c7;
+      --tineretii-amber: #d97706;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* A4 Printable Sheet Container */
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 1.5rem auto;
+      background: #ffffff;
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+      border: 1px solid #cbd5e1;
+      padding: 8mm 9mm;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Route visibility filtering transitions */
+    .topo-element {
+      transition: opacity 0.25s ease, filter 0.25s ease;
+    }
+
+    .dimmed {
+      opacity: 0.16 !important;
+      filter: grayscale(70%);
+    }
+
+    .highlighted-pitch {
+      filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.45));
+    }
+
+    /* Interactive SVG Pitch Hover */
+    .interactive-node {
+      cursor: pointer;
+    }
+    .interactive-node:hover circle,
+    .interactive-node:hover polygon {
+      transform: scale(1.12);
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    /* Print Media Query for exact A4 output */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 5mm;
+      }
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .a4-sheet {
+        width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 2mm 3mm !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    /* Responsive adjustments for smaller mobile screens while viewing */
+    @media screen and (max-width: 840px) {
+      .a4-sheet {
+        width: 98vw;
+        min-height: auto;
+        padding: 12px;
+        margin: 0.5rem auto;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <header class="no-print sticky top-0 z-50 bg-slate-900 text-white border-b border-slate-700 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand / Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-red-600 flex items-center justify-center font-black text-lg tracking-tighter shadow-inner">
+          TB
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold tracking-tight flex items-center gap-2">
+            Topo Vectorial A4: Turnu Babilonului &amp; Canguru Șchiop
+            <span class="hidden md:inline-block text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              100% Verificat conform schițelor A. Păută
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Defileul Crișului Repede, Vadu Crișului • Pereții Mari (spre Amfiteatru)</p>
+        </div>
+      </div>
+
+      <!-- Controls Group -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Route Filter Selector -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
+          <button id="btn-mode-both" onclick="setRouteMode('both')" class="px-2.5 py-1.5 rounded-md font-semibold bg-slate-700 text-white shadow-sm transition">
+            Ambele Trasee
+          </button>
+          <button id="btn-mode-babilon" onclick="setRouteMode('babilon')" class="px-2.5 py-1.5 rounded-md font-semibold text-blue-300 hover:text-white transition">
+            Doar Babilon (4 LC)
+          </button>
+          <button id="btn-mode-canguru" onclick="setRouteMode('canguru')" class="px-2.5 py-1.5 rounded-md font-semibold text-red-300 hover:text-white transition">
+            Doar Canguru (5 LC)
+          </button>
+        </div>
+
+        <!-- Layout Mode Selector -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
+          <button id="btn-layout-full" onclick="setSheetLayout('complete')" class="px-2.5 py-1.5 rounded-md font-semibold bg-slate-700 text-white transition">
+            Fișă Completă A4
+          </button>
+          <button id="btn-layout-topo" onclick="setSheetLayout('large-topo')" class="px-2.5 py-1.5 rounded-md font-semibold text-slate-300 hover:text-white transition">
+            Doar Schița Mare
+          </button>
+        </div>
+
+        <!-- Export & Print Buttons -->
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.print()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-12 0h12v4H6v-4z"/></svg>
+            Printează A4 / PDF
+          </button>
+          <button onclick="downloadSVG()" class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs font-semibold px-2.5 py-2 rounded-lg border border-slate-600 transition" title="Descarcă fișierul vectorial .svg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            SVG
+          </button>
+          <button onclick="downloadPNG()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-2.5 py-2 rounded-lg shadow transition" title="Descarcă imagine PNG la rezoluție mare pentru telefon/imprimantă">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            PNG (HD)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Pitch Inspector Banner (Screen Only) -->
+    <div id="inspector-bar" class="bg-slate-800/90 border-t border-slate-700/80 px-4 py-1.5 text-xs text-slate-300">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="inspector-text" class="font-medium">
+            <strong>Sfat interactiv:</strong> Dă click pe orice regrupare (R0–R5) sau lungime din schiță pentru a evidenția detaliile tehnice ale pasajului.
+          </span>
+        </div>
+        <span id="status-toast" class="hidden text-emerald-400 font-bold"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <div id="a4-container" class="a4-sheet flex flex-col justify-between">
+      
+      <!-- SHEET HEADER -->
+      <div class="border-b-2 border-slate-900 pb-2 mb-2 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 bg-slate-900 text-white rounded">
+              FIȘĂ TEHNICĂ &amp; TOPO VECTORIAL
+            </span>
+            <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              Munții Pădurea Craiului • Defileul Crișului Repede • Vadu Crișului
+            </span>
+          </div>
+          <h2 class="text-xl font-black tracking-tight text-slate-900 uppercase mt-0.5">
+            Turnu Babilonului <span class="text-blue-700">(4A / 7+)</span> &amp; Canguru Șchiop <span class="text-red-600">(4B / 8-)</span>
+          </h2>
+        </div>
+        <div class="flex flex-wrap gap-1.5 text-[10px] leading-tight">
+          <div class="border border-blue-700 bg-blue-50 px-2 py-1 rounded">
+            <div class="font-black text-blue-900">TURNU BABILONULUI</div>
+            <div class="text-blue-800 font-semibold">4 LC • ~130 m • 4A / 7+ UIAA • A. &amp; G. Păută (1986)</div>
+          </div>
+          <div class="border border-red-600 bg-red-50 px-2 py-1 rounded">
+            <div class="font-black text-red-900">CANGURU ȘCHIOP</div>
+            <div class="text-red-800 font-semibold">5 LC scurte • ~130 m • 4B / 8- UIAA • Păută &amp; Soloși (1998)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT GRID (SVG Topo + Descriptions) -->
+      <div id="sheet-body" class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+        
+        <!-- VECTOR SVG TOPO CONTAINER (7 cols in complete mode, 12 cols in large-topo mode) -->
+        <div id="topo-col" class="lg:col-span-7 border border-slate-300 rounded-lg bg-white p-1 relative">
+          
+          <svg id="climbing-topo-svg" viewBox="0 0 880 1030" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" class="block select-none">
+            <defs>
+              <!-- White Halo Filter for crisp text readability over lines -->
+              <filter id="text-halo" x="-15%" y="-15%" width="130%" height="130%">
+                <feMorphology operator="dilate" radius="2.2" in="SourceAlpha" result="dilated"/>
+                <feFlood flood-color="#ffffff" flood-opacity="0.96" result="white"/>
+                <feComposite in="white" in2="dilated" operator="in" result="halo"/>
+                <feMerge>
+                  <feMergeNode in="halo"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
+              <!-- Hatching pattern for roofs and ledges -->
+              <pattern id="rock-hatch" width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#334155" stroke-width="1.4" />
+              </pattern>
+
+              <!-- Arrowheads -->
+              <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
+              </marker>
+              <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+              </marker>
+
+              <!-- Standard Belay Symbol (Red Circle with Horizontal Bar) -->
+              <g id="belay-station">
+                <circle cx="0" cy="0" r="11" fill="#ffffff" stroke="#dc2626" stroke-width="3.6" />
+                <line x1="-8.5" y1="0" x2="8.5" y2="0" stroke="#dc2626" stroke-width="3.2" />
+              </g>
+
+              <!-- Yellow Belay Symbol for Neighboring Routes (Tinereții / Soroș) -->
+              <g id="belay-neighbor">
+                <circle cx="0" cy="0" r="9.5" fill="#ffffff" stroke="#d97706" stroke-width="3" />
+                <line x1="-6.5" y1="-4.5" x2="6.5" y2="4.5" stroke="#d97706" stroke-width="2.6" />
+              </g>
+
+              <!-- Provisional / Intermediate Belay Symbol (Red Diamond) -->
+              <g id="belay-diamond">
+                <polygon points="0,-11 11,0 0,11 -11,0" fill="#dc2626" stroke="#ffffff" stroke-width="1.5" />
+              </g>
+
+              <!-- Stylized Tree / Pom (Matching original Păută schema) -->
+              <g id="tree-symbol">
+                <line x1="0" y1="0" x2="0" y2="20" stroke="#15803d" stroke-width="3.2" />
+                <line x1="-12" y1="20" x2="12" y2="20" stroke="#15803d" stroke-width="3.2" stroke-linecap="round" />
+                <circle cx="0" cy="-4" r="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5" />
+                <circle cx="-4" cy="-6" r="2" fill="#4ade80" />
+                <circle cx="5" cy="-3" r="2.2" fill="#22c55e" />
+                <circle cx="0" cy="1" r="1.8" fill="#16a34a" />
+              </g>
+
+              <!-- Stylized Grass Tuft (Prag cu iarbă) -->
+              <g id="grass-tuft">
+                <line x1="-10" y1="0" x2="10" y2="0" stroke="#22c55e" stroke-width="3" stroke-linecap="round" />
+                <path d="M -6,0 Q -9,-9 -13,-13 M -2,0 Q -3,-11 -5,-16 M 2,0 Q 3,-11 5,-16 M 6,0 Q 9,-9 13,-13" fill="none" stroke="#16a34a" stroke-width="1.6" stroke-linecap="round" />
+              </g>
+
+              <!-- Yellow Double-Outline Arrow (for Neighbor / Disused Routes) -->
+              <g id="yellow-arrow-up">
+                <path d="M -4,18 L -4,-4 L -9,-4 L 0,-18 L 9,-4 L 4,-4 L 4,18 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="1.8" stroke-linejoin="round" />
+              </g>
+            </defs>
+
+            <!-- White Vector Background -->
+            <rect x="0" y="0" width="880" height="1030" fill="#ffffff" />
+
+            <g id="elevation-scale">
+              <rect x="6" y="10" width="66" height="1010" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+              <text x="39" y="28" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#334155">LUNGIMI</text>
+              <text x="23" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="800" fill="#1d4ed8">BAB.</text>
+              <text x="55" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="800" fill="#dc2626">CANG.</text>
+              <line x1="39" y1="34" x2="39" y2="1010" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
+
+              <!-- Band Dividers -->
+              <line x1="8" y1="242" x2="70" y2="242" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="8" y1="465" x2="70" y2="465" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="8" y1="610" x2="70" y2="610" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="8" y1="695" x2="70" y2="695" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="8" y1="855" x2="70" y2="855" stroke="#cbd5e1" stroke-width="1" />
+
+              <!-- Pitch 4 Babilon / Pitch 5 Canguru (Top 25m) -->
+              <text x="23" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#1d4ed8">25m</text>
+              <text x="23" y="163" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#1e40af">(L4)</text>
+              <text x="55" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#dc2626">25m</text>
+              <text x="55" y="163" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#991b1b">(L5)</text>
+
+              <!-- Pitch 3 Babilon / Pitch 4 Canguru (Upper-Mid 25m) -->
+              <text x="23" y="355" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#1d4ed8">25m</text>
+              <text x="23" y="368" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#1e40af">(L3)</text>
+              <text x="55" y="355" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#dc2626">25m</text>
+              <text x="55" y="368" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#991b1b">(L4)</text>
+
+              <!-- Pitch 2 Babilon (50m) / Pitch 3 + Pitch 2 Canguru (20m + 25m) -->
+              <text x="23" y="535" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#1d4ed8">50m</text>
+              <text x="23" y="548" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#1e40af">(L2)</text>
+
+              <text x="55" y="492" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800" fill="#dc2626">20m</text>
+              <text x="55" y="504" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#991b1b">(L3)</text>
+
+              <text x="55" y="600" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800" fill="#dc2626">25m</text>
+              <text x="55" y="612" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#991b1b">(L2)</text>
+
+              <!-- Pitch 1 Babilon (30m) / Pitch 1 Canguru (20m) -->
+              <text x="23" y="785" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="800" fill="#1d4ed8">30m</text>
+              <text x="23" y="798" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#1e40af">(L1)</text>
+
+              <text x="55" y="775" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800" fill="#dc2626">20m</text>
+              <text x="55" y="787" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#991b1b">(L1)</text>
+
+              <!-- Canguru Approach (10* m) -->
+              <text x="55" y="925" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800" fill="#dc2626">10*m</text>
+              <text x="55" y="938" text-anchor="middle" font-family="Inter, sans-serif" font-size="7.5" font-weight="700" fill="#991b1b">(Acces)</text>
+            </g>
+
+            <g id="svg-legend" transform="translate(82, 12)">
+              <rect x="0" y="0" width="295" height="156" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.5" />
+              <rect x="0" y="0" width="295" height="22" rx="6" fill="#0f172a" />
+              <text x="10" y="15" font-family="Inter, sans-serif" font-size="10.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">LEGENDĂ SIMBOLURI TOPO (UIAA / PĂUTĂ)</text>
+
+              <!-- Col 1 -->
+              <g transform="translate(18, 38)">
+                <use href="#belay-station" transform="scale(0.68)" />
+                <text x="14" y="4" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Regrupare amenajată (R)</text>
+              </g>
+              <g transform="translate(18, 60)">
+                <use href="#belay-diamond" transform="scale(0.75)" />
+                <text x="14" y="4" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Regrupare provizorie (R1/2)</text>
+              </g>
+              <g transform="translate(10, 77)">
+                <path d="M 0,10 L 0,0 L 18,0 L 18,10" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+                <text x="24" y="8" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Tavan / Surplombă</text>
+              </g>
+              <g transform="translate(12, 98)">
+                <path d="M 0,0 L 7,5 L 14,0 L 14,14 L 7,19 L 0,14 Z M 7,5 L 7,19" fill="none" stroke="#0f172a" stroke-width="1.6" />
+                <text x="22" y="12" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Diedru / Bavareză</text>
+              </g>
+              <g transform="translate(10, 123)">
+                <line x1="0" y1="4" x2="18" y2="4" stroke="#1d4ed8" stroke-width="3.5" />
+                <text x="24" y="8" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#1d4ed8">Tr. Turnu Babilonului (4 LC)</text>
+              </g>
+              <g transform="translate(10, 141)">
+                <line x1="0" y1="4" x2="18" y2="4" stroke="#dc2626" stroke-width="3.5" />
+                <text x="24" y="8" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#dc2626">Tr. Canguru Șchiop (5 LC)</text>
+              </g>
+
+              <!-- Col 2 (Right side of Legend) -->
+              <g transform="translate(168, 35)">
+                <polygon points="0,8 20,8 24,13 4,13" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.3" />
+                <text x="28" y="12" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Brână / Prag</text>
+              </g>
+              <g transform="translate(168, 57)">
+                <line x1="2" y1="5" x2="22" y2="5" stroke="#0284c7" stroke-width="2.5" marker-end="url(#arrow-blue)" />
+                <text x="28" y="8" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Linie creastă</text>
+              </g>
+              <g transform="translate(178, 80)">
+                <use href="#tree-symbol" transform="scale(0.55)" />
+                <text x="18" y="4" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Copac / Pom</text>
+              </g>
+              <g transform="translate(178, 104)">
+                <use href="#grass-tuft" transform="scale(0.65)" />
+                <text x="18" y="2" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#0f172a">Prag cu iarbă</text>
+              </g>
+              <g transform="translate(168, 123)">
+                <line x1="0" y1="2" x2="20" y2="2" stroke="#1d4ed8" stroke-width="2.8" />
+                <line x1="0" y1="6" x2="20" y2="6" stroke="#dc2626" stroke-width="2.8" />
+                <text x="25" y="7" font-family="Inter, sans-serif" font-size="9" font-weight="800" fill="#0f172a">Traseu Comun</text>
+              </g>
+            </g>
+
+            <g id="natural-boundaries">
+              <!-- Top Forest Edge (Iesire in padure) -->
+              <path d="M 385,48 Q 430,68 475,45 Q 520,30 565,52 Q 615,20 665,36 Q 715,58 765,48 Q 815,38 865,55" fill="none" stroke="#0284c7" stroke-width="2.8" />
+              <!-- Upper-left cliff terrace line -->
+              <path d="M 385,95 L 495,95 Q 515,82 532,68" fill="none" stroke="#0284c7" stroke-width="2.4" />
+              <!-- Summit Pyramid Crest lines radiating from R4/R5 -->
+              <path d="M 655,62 L 605,98 M 655,62 L 705,98 M 635,105 L 595,155 M 675,102 L 718,195 M 615,175 L 560,218" fill="none" stroke="#0284c7" stroke-width="2.2" />
+
+              <!-- Trees along Top Forest Edge -->
+              <use href="#tree-symbol" transform="translate(415, 38) scale(0.85)" />
+              <use href="#tree-symbol" transform="translate(505, 34) scale(0.85)" />
+              <use href="#grass-tuft" transform="translate(458, 52) scale(0.8)" />
+              <use href="#grass-tuft" transform="translate(565, 38) scale(0.8)" />
+              <use href="#tree-symbol" transform="translate(768, 35) scale(0.85)" />
+              <use href="#tree-symbol" transform="translate(840, 35) scale(0.85)" />
+
+              <!-- Bottom Base Path / Poteca de la baza peretelui -->
+              <path d="M 80,950 Q 135,915 190,965 L 230,990 L 310,985 Q 375,935 450,895 Q 505,875 555,965 Q 625,940 705,895 Q 785,845 865,850" fill="none" stroke="#0284c7" stroke-width="3" />
+
+              <!-- Trees & Grass along Base Path -->
+              <use href="#grass-tuft" transform="translate(102, 978)" />
+              <use href="#tree-symbol" transform="translate(145, 935) scale(0.9)" />
+              <!-- Tree right next to R0 Babilon -->
+              <use href="#tree-symbol" transform="translate(278, 968) scale(0.9)" />
+              <use href="#tree-symbol" transform="translate(345, 965) scale(0.85)" />
+              <use href="#tree-symbol" transform="translate(445, 912) scale(0.9)" />
+              <use href="#tree-symbol" transform="translate(502, 898) scale(0.8)" />
+              <use href="#grass-tuft" transform="translate(592, 962) scale(0.9)" />
+              <use href="#grass-tuft" transform="translate(658, 925) scale(0.95)" />
+              <!-- Large tree on lower right -->
+              <use href="#tree-symbol" transform="translate(725, 865) scale(1.25)" />
+              <use href="#grass-tuft" transform="translate(795, 875) scale(0.95)" />
+            </g>
+
+            <g id="rock-features">
+              <!-- Far Lower-Left Disused Route Feature -->
+              <rect x="122" y="775" width="38" height="105" fill="none" stroke="#0f172a" stroke-width="4.5" />
+              <path d="M 120,775 Q 152,792 178,765" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2" />
+              <use href="#yellow-arrow-up" transform="translate(112, 875) rotate(22) scale(1.1)" />
+              <text x="95" y="752" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">-dezafectat-</text>
+              <text x="108" y="764" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">tr. ???</text>
+
+              <!-- Babilon L1 Curved Crest Line (Linia arcuită a crestei) -->
+              <path d="M 214,962 L 214,765 L 258,648" fill="none" stroke="#0284c7" stroke-width="2.8" marker-end="url(#arrow-blue)" />
+              <!-- Small scoop/overhang in L1 Babilon (7-) -->
+              <path d="M 235,782 Q 258,805 280,782" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <use href="#grass-tuft" transform="translate(262, 922) scale(0.55)" />
+              <use href="#grass-tuft" transform="translate(162, 635) scale(1.05)" />
+              <use href="#grass-tuft" transform="translate(242, 638) scale(0.5)" />
+
+              <!-- R1 Babilon Ledge & Tree ("prag comod, lângă un pom, unde regrupăm") -->
+              <polygon points="270,620 308,620 314,630 276,630" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <use href="#tree-symbol" transform="translate(316, 598) scale(0.85)" />
+
+              <!-- Disused Red Route above R1 Babilon -->
+              <use href="#yellow-arrow-up" transform="translate(278, 535) rotate(15) scale(1.0)" />
+              <text x="208" y="472" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">-dezafectat-</text>
+              <text x="205" y="484" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">traseu Roșu ??</text>
+              <use href="#grass-tuft" transform="translate(258, 438) scale(1.05)" />
+
+              <!-- Babilon L2a Dihedral + Small Overhang (6-) -->
+              <path d="M 332,492 L 342,500 L 352,492 L 352,552 L 342,560 L 332,552 Z M 342,500 L 342,560" fill="#ffffff" stroke="#0f172a" stroke-width="2.2" />
+              <path d="M 312,482 Q 342,502 372,482" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <use href="#grass-tuft" transform="translate(318, 572) scale(0.6)" />
+              <use href="#grass-tuft" transform="translate(402, 456) scale(0.75)" />
+
+              <!-- Large Black Rectangle & Arch Roof between Babilon and Canguru L1/L2 -->
+              <rect x="358" y="655" width="46" height="110" fill="none" stroke="#0f172a" stroke-width="5" />
+              <path d="M 398,615 Q 462,675 525,622" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="4" />
+
+              <!-- Canguru R00 -> R0 Approach Ramp & Grotto -->
+              <path d="M 520,895 L 535,945 L 545,942 L 528,892 Z" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.2" />
+              <path d="M 505,862 L 605,862" fill="none" stroke="#0284c7" stroke-width="2.5" />
+              <use href="#grass-tuft" transform="translate(505, 892) scale(0.7)" />
+              <use href="#grass-tuft" transform="translate(500, 945) scale(0.6)" />
+              <use href="#tree-symbol" transform="translate(568, 825) scale(0.72)" />
+              <!-- Small Grotto / Cave next to R0 Canguru -->
+              <path d="M 582,848 Q 595,815 608,848 Z" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+
+              <!-- Canguru L1 Belly Overhang ("burtă", 7- / 7+) & R1 Traverse Parallelogram -->
+              <path d="M 488,765 Q 512,785 534,765" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <polygon points="462,718 508,718 528,672 482,672" fill="#ffffff" stroke="#0f172a" stroke-width="3" />
+
+              <!-- Canguru L2 Steep Dihedral (Crux 8- / 7+) & Upper Ledge (7-) -->
+              <path d="M 485,602 Q 510,620 532,600" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <path d="M 495,532 L 506,538 L 515,530 L 530,598 L 520,606 L 510,598 Z M 506,538 L 520,606" fill="#ffffff" stroke="#0f172a" stroke-width="2.2" />
+              <polygon points="478,505 524,505 530,514 484,514" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.4" />
+
+              <!-- THE BIG ROOF (Tavanul Mare de la R2 Babilon / R3 Canguru) -->
+              <path d="M 495,432 L 495,468 L 592,468 L 592,432" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="3.2" />
+              <!-- Small slanted chimney/dihedral under the roof belay -->
+              <path d="M 516,480 L 525,476 L 544,510 L 535,515 Z" fill="none" stroke="#0f172a" stroke-width="1.8" />
+
+              <!-- Open Overhanging Dihedral above the Right Lip of Big Roof (7-) -->
+              <path d="M 562,395 Q 585,414 606,395" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.8" />
+              <path d="M 594,405 L 604,412 L 612,404 L 624,462 L 614,468 L 605,462 Z M 604,412 L 614,468" fill="none" stroke="#0f172a" stroke-width="2" />
+
+              <!-- L3 Babilon / L4 Canguru Small Ledge ("brână mică și incomodă") & Grass -->
+              <use href="#grass-tuft" transform="translate(558, 325) scale(0.75)" />
+              <polygon points="568,295 612,295 618,303 574,303" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.5" />
+
+              <!-- R3 Babilon / R4 Canguru Comfortable Ledge ("brână comodă") -->
+              <polygon points="622,244 684,244 692,255 630,255" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2" />
+              <use href="#grass-tuft" transform="translate(578, 222) scale(0.7)" />
+
+              <!-- L4 Babilon / L5 Canguru Dihedral & Small Roof ("Tăvănel") -->
+              <path d="M 615,175 L 624,182 L 632,175 L 642,212 L 633,218 L 624,212 Z M 624,182 L 633,218" fill="none" stroke="#0f172a" stroke-width="1.8" />
+              <path d="M 618,145 L 618,172 L 664,172 L 664,145" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2.6" />
+              <!-- Upper Crest Ledge (4+) & Summit Tank Ledge (R4/R5) -->
+              <use href="#grass-tuft" transform="translate(602, 128) scale(0.65)" />
+              <polygon points="615,108 655,108 662,116 622,116" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.5" />
+              <polygon points="652,55 702,55 710,65 660,65" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2" />
+              <polygon points="575,20 622,20 628,28 581,28" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="1.5" />
+
+              <!-- Left Upper Wall Couloirs, Trees & "Fereastră" Landmark -->
+              <line x1="255" y1="210" x2="195" y2="385" stroke="#0f172a" stroke-width="2.4" />
+              <line x1="278" y1="215" x2="218" y2="390" stroke="#0f172a" stroke-width="2.4" />
+              <line x1="518" y1="145" x2="465" y2="245" stroke="#0f172a" stroke-width="2.2" />
+              <line x1="534" y1="150" x2="481" y2="250" stroke="#0f172a" stroke-width="2.2" />
+
+              <use href="#tree-symbol" transform="translate(302, 165) scale(0.85)" />
+              <use href="#tree-symbol" transform="translate(458, 128) scale(0.85)" />
+              <use href="#tree-symbol" transform="translate(382, 268) scale(0.9)" />
+              <use href="#grass-tuft" transform="translate(335, 195) scale(0.9)" />
+              <use href="#grass-tuft" transform="translate(415, 222) scale(0.95)" />
+              <use href="#grass-tuft" transform="translate(328, 312) scale(1.0)" />
+              <use href="#grass-tuft" transform="translate(452, 355) scale(0.85)" />
+
+              <!-- Natural Rock Window ("!!! fereastră") -->
+              <ellipse cx="498" cy="295" rx="9" ry="18" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+              <text x="488" y="255" font-family="Inter, sans-serif" font-size="11" font-weight="900" fill="#0284c7">!!!</text>
+              <text x="458" y="270" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#0f172a">fereastră</text>
+              <use href="#yellow-arrow-up" transform="translate(445, 342) rotate(36) scale(1.1)" />
+              <text x="368" y="315" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">-dezafectat-</text>
+              <text x="372" y="328" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">traseu cu</text>
+              <text x="372" y="341" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#dc2626">fereastră ???</text>
+              <!-- Blue line with arrow left of L3 -->
+              <path d="M 465,392 L 555,235" fill="none" stroke="#0284c7" stroke-width="3" marker-end="url(#arrow-blue)" />
+            </g>
+
+            <g id="neighbor-routes">
+              <!-- Traseul Tinereții Lower Crack & Arrows -->
+              <path d="M 555,795 L 605,642" fill="none" stroke="#0f172a" stroke-width="3.2" />
+              <path d="M 552,762 C 602,750 545,715 602,702 C 552,688 605,665 568,648" fill="none" stroke="#0f172a" stroke-width="1.3" />
+              <use href="#yellow-arrow-up" transform="translate(612, 600) rotate(14) scale(1.05)" />
+              <use href="#belay-neighbor" transform="translate(632, 515)" />
+              <use href="#yellow-arrow-up" transform="translate(662, 448) rotate(16) scale(1.05)" />
+
+              <!-- Warning Callout Box for R. Tinereții -->
+              <g transform="translate(650, 492)">
+                <rect x="0" y="0" width="138" height="52" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1.8" />
+                <text x="69" y="14" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" font-weight="900" fill="#b45309">!!! ATENȚIE ORIENTARE</text>
+                <text x="69" y="27" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#0f172a">R. Traseul Tinereții</text>
+                <text x="69" y="39" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#78350f">(3m mai jos, 2m dreapta</text>
+                <text x="69" y="48" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="800" fill="#dc2626">de tavan — NU deviați!)</text>
+              </g>
+
+              <!-- Lower-Right Roof/Dihedral Feature & Creasta Abruptă (Soroș) -->
+              <path d="M 702,695 L 702,722 L 775,722 L 775,695" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2.2" />
+              <path d="M 726,700 L 738,708 L 750,700 L 750,752 L 738,760 L 726,752 Z M 738,708 L 738,760" fill="#ffffff" stroke="#0f172a" stroke-width="2.2" />
+
+              <!-- Creasta Abruptă (Soroș) Heavy Black Line -->
+              <path d="M 852,625 Q 838,440 762,315" fill="none" stroke="#0f172a" stroke-width="6.5" stroke-linecap="round" />
+              <text x="815" y="650" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="900" fill="#0f172a">Creasta</text>
+              <text x="815" y="665" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="900" fill="#0f172a">Abruptă</text>
+              <text x="815" y="680" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#1d4ed8">(Soroș)</text>
+
+              <!-- Amfiteatru Terrace & Multiple Route Arrows -->
+              <use href="#belay-neighbor" transform="translate(742, 265)" />
+              <use href="#belay-neighbor" transform="translate(855, 255)" />
+              <polygon points="768,268 862,268 872,280 778,280" fill="url(#rock-hatch)" stroke="#0f172a" stroke-width="2" />
+              <use href="#grass-tuft" transform="translate(808, 395) scale(0.85)" />
+
+              <use href="#yellow-arrow-up" transform="translate(715, 165) rotate(-25) scale(1.15)" />
+              <use href="#yellow-arrow-up" transform="translate(735, 160) rotate(-22) scale(1.15)" />
+              <use href="#yellow-arrow-up" transform="translate(755, 155) rotate(-18) scale(1.15)" />
+              <use href="#yellow-arrow-up" transform="translate(815, 185) scale(1.1)" />
+              <use href="#yellow-arrow-up" transform="translate(835, 185) scale(1.1)" />
+              <use href="#yellow-arrow-up" transform="translate(855, 185) scale(1.1)" />
+
+              <text x="802" y="135" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="900" fill="#0f172a">AMFITEATRU</text>
+              <text x="765" y="218" text-anchor="middle" font-family="Inter, sans-serif" font-size="10.5" font-weight="800" fill="#dc2626">multe alte trasee</text>
+              <text x="765" y="231" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#334155">(Soroș, Eva, Tinereții)</text>
+            </g>
+
+            
+            <!-- 1. TURNU BABILONULUI EXCLUSIVE LOWER SECTION (L1 & L2a up to R1/2) -->
+            <g id="route-babilon-only" class="topo-element">
+              <!-- L1: R0 (230,990) -> R1 (275,610) -->
+              <path onclick="inspectPitch('babilon-l1')" class="interactive-node"
+                d="M 230,990 C 232,935 226,880 226,825 C 226,775 248,745 256,695 C 262,655 268,635 275,610"
+                fill="none" stroke="#1d4ed8" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- L2a: R1 (275,610) -> Junction R1/2 (415,482) (NO connection to R1 Canguru!) -->
+              <path onclick="inspectPitch('babilon-l2')" class="interactive-node"
+                d="M 275,610 C 282,578 308,562 325,532 C 335,512 332,495 358,490 C 382,485 398,482 415,482"
+                fill="none" stroke="#1d4ed8" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Babilon L1 & L2a Technical Grades -->
+              <g filter="url(#text-halo)" font-family="JetBrains Mono, monospace" font-size="13.5" font-weight="800" fill="#1e3a8a">
+                <text x="192" y="925">5+</text>
+                <text x="236" y="842">6-</text>
+                <text x="248" y="772">7-</text>
+                <text x="272" y="692">5+</text>
+                <!-- L2a grades -->
+                <text x="284" y="562">5+</text>
+                <text x="305" y="512">6-</text>
+                <text x="368" y="506">5+</text>
+              </g>
+
+              <!-- R0 Babilon Belay -->
+              <g transform="translate(230, 990)" onclick="inspectPitch('babilon-l1')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-48" y="5" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="15" font-weight="900" fill="#1d4ed8">R0</text>
+                <text x="-68" y="19" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#1e3a8a">(Start Babilon)</text>
+              </g>
+
+              <!-- R1 Babilon Belay (lângă pom) -->
+              <g transform="translate(275, 610)" onclick="inspectPitch('babilon-l2')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-42" y="4" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="15" font-weight="900" fill="#1d4ed8">R1</text>
+                <text x="-82" y="18" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#1e3a8a">(prag + pom)</text>
+              </g>
+            </g>
+
+            <!-- 2. CANGURU ȘCHIOP EXCLUSIVE LOWER SECTION (Approach R00->R0, L1, L2 up to R2) -->
+            <g id="route-canguru-only" class="topo-element">
+              <!-- Approach: R00 (555,965) -> R0 (545,855) -->
+              <path onclick="inspectPitch('canguru-acces')" class="interactive-node"
+                d="M 555,965 C 538,942 522,915 512,885 L 545,855"
+                fill="none" stroke="#dc2626" stroke-width="4.5" stroke-dasharray="6,3" stroke-linecap="round" />
+
+              <!-- L1: R0 (545,855) -> R1 (495,695) -->
+              <path onclick="inspectPitch('canguru-l1')" class="interactive-node"
+                d="M 545,855 C 525,832 512,802 512,775 C 512,745 505,720 495,695"
+                fill="none" stroke="#dc2626" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- L2: R1 (495,695) -> R2 Junction (445,482) -->
+              <path onclick="inspectPitch('canguru-l2')" class="interactive-node"
+                d="M 495,695 C 512,672 525,642 526,605 C 526,572 514,542 502,512 C 492,492 468,484 445,482"
+                fill="none" stroke="#dc2626" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Canguru Approach, L1 & L2 Technical Grades -->
+              <g filter="url(#text-halo)" font-family="JetBrains Mono, monospace" font-size="13.5" font-weight="800" fill="#991b1b">
+                <!-- Approach -->
+                <text x="488" y="925">3-</text>
+                <text x="536" y="908">2-</text>
+                <!-- L1 -->
+                <text x="485" y="798">7-</text>
+                <text x="518" y="750">7+</text>
+                <text x="518" y="668">7+</text>
+                <!-- L2 -->
+                <text x="536" y="608" font-size="15" fill="#dc2626">8-</text>
+                <text x="468" y="568">7+</text>
+                <text x="515" y="532">7-</text>
+              </g>
+
+              <!-- R00 Canguru Belay (Potecă) -->
+              <g transform="translate(555, 965)" onclick="inspectPitch('canguru-acces')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="16" y="5" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="14" font-weight="900" fill="#dc2626">R00</text>
+                <text x="16" y="18" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#991b1b">(potecă)</text>
+              </g>
+
+              <!-- R0 Canguru Belay (Grotă / Copac) -->
+              <g transform="translate(518, 872)" onclick="inspectPitch('canguru-l1')" class="interactive-node">
+                <use href="#belay-diamond" transform="scale(0.85)" />
+              </g>
+              <g transform="translate(545, 855)" onclick="inspectPitch('canguru-l1')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="15" y="14" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="14" font-weight="900" fill="#dc2626">R0</text>
+                <text x="15" y="26" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#991b1b">(grotă)</text>
+              </g>
+
+              <!-- R1 Canguru Belay (Față spălată / Traverseu) -->
+              <g transform="translate(495, 695)" onclick="inspectPitch('canguru-l2')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-44" y="4" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="14.5" font-weight="900" fill="#dc2626">R1</text>
+                <text x="-58" y="17" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="9.5" font-weight="800" fill="#991b1b">(Canguru)</text>
+              </g>
+            </g>
+
+            <g id="route-shared-upper" class="topo-element">
+              <!-- Shared Traverse: Junction (415,482)/(445,482) -> Big Roof Belay (520,465) -->
+              <path onclick="inspectPitch('shared-traverse')" class="interactive-node"
+                d="M 415,480 L 445,480 C 475,480 495,470 520,463"
+                fill="none" stroke="#1d4ed8" stroke-width="3.6" stroke-linecap="round" />
+              <path onclick="inspectPitch('shared-traverse')" class="interactive-node"
+                d="M 415,485 L 445,485 C 475,485 495,475 520,468"
+                fill="none" stroke="#dc2626" stroke-width="3.6" stroke-linecap="round" />
+
+              <!-- Shared Pitch under Big Roof & up Open Dihedral: R2/R3 (520,465) -> R3/R4 (638,242) -->
+              <path onclick="inspectPitch('shared-roof')" class="interactive-node"
+                d="M 520,463 C 552,474 578,468 594,448 C 602,422 590,382 590,342 C 590,305 602,272 636,240"
+                fill="none" stroke="#1d4ed8" stroke-width="3.6" stroke-linecap="round" />
+              <path onclick="inspectPitch('shared-roof')" class="interactive-node"
+                d="M 520,468 C 552,479 580,473 598,452 C 606,424 595,382 595,342 C 595,305 607,275 640,244"
+                fill="none" stroke="#dc2626" stroke-width="3.6" stroke-linecap="round" />
+
+              <!-- Shared Final Pitch: R3/R4 (638,242) -> Top R4/R5 (655,62) -->
+              <path onclick="inspectPitch('shared-top')" class="interactive-node"
+                d="M 636,242 C 625,215 618,195 622,175 L 656,172 C 662,150 642,130 642,108 L 653,62"
+                fill="none" stroke="#1d4ed8" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+              <path onclick="inspectPitch('shared-top')" class="interactive-node"
+                d="M 641,242 C 630,215 623,195 627,178 L 661,175 C 667,150 647,130 647,108 L 658,62"
+                fill="none" stroke="#dc2626" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Shared Section Technical Grades -->
+              <g filter="url(#text-halo)" font-family="JetBrains Mono, monospace" font-size="13.5" font-weight="800" fill="#0f172a">
+                <!-- Traverse to roof -->
+                <text x="466" y="464">5-</text>
+                <!-- Roof & Overhanging Dihedral (L3 Bab / L4 Cang) -->
+                <text x="558" y="492" fill="#dc2626">7+</text>
+                <text x="615" y="422" fill="#dc2626">7-</text>
+                <text x="560" y="382">6+</text>
+                <text x="605" y="332">5-</text>
+                <text x="618" y="278">4-</text>
+                <!-- Top Pitch (L4 Bab / L5 Cang) -->
+                <text x="595" y="198">5-</text>
+                <text x="670" y="185" fill="#dc2626">6+</text>
+                <text x="615" y="135">4+</text>
+                <text x="665" y="92">3-</text>
+              </g>
+
+              <!-- JUNCTION STATION: R1/2 (Babilon) + R2 (Canguru) -->
+              <g transform="translate(415, 482)" onclick="inspectPitch('shared-traverse')" class="interactive-node">
+                <use href="#belay-diamond" transform="scale(1.1)" />
+              </g>
+              <g transform="translate(445, 482)" onclick="inspectPitch('shared-traverse')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-38" y="28" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#1d4ed8">R1/2 (Bab.)</text>
+                <text x="-38" y="41" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#dc2626">R2 (Cang.)</text>
+              </g>
+
+              <!-- BIG ROOF STATION: R2 (Babilon) / R3 (Canguru) directly under LEFT side of roof -->
+              <g transform="translate(520, 465)" onclick="inspectPitch('shared-roof')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-12" y="-38" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#1d4ed8">R2 (Bab.) /</text>
+                <text x="56" y="-38" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#dc2626">R3 (Cang.)</text>
+                <text x="5" y="-25" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="#0f172a">(sub stânga tavanului)</text>
+              </g>
+
+              <!-- UPPER LEDGE STATION: R3 (Babilon) / R4 (Canguru) -->
+              <g transform="translate(638, 242)" onclick="inspectPitch('shared-top')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-85" y="-4" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#1d4ed8">R3 (Bab.)</text>
+                <text x="-85" y="10" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="12.5" font-weight="900" fill="#dc2626">R4 (Cang.)</text>
+              </g>
+
+              <!-- TOP SUMMIT STATION: R4 (Babilon) / R5 (Canguru) -->
+              <g transform="translate(655, 62)" onclick="inspectPitch('shared-top')" class="interactive-node">
+                <use href="#belay-station" />
+                <text x="-92" y="-2" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="13" font-weight="900" fill="#1d4ed8">R4 (Bab.)</text>
+                <text x="-92" y="12" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="13" font-weight="900" fill="#dc2626">R5 (Cang.)</text>
+                <text x="16" y="2" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="10.5" font-weight="900" fill="#0f172a">TOP COMUN (Tanc)</text>
+                <text x="16" y="14" filter="url(#text-halo)" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#15803d">→ Ieșire în pădure</text>
+              </g>
+            </g>
+
+            <!-- Bottom Route Start Labels -->
+            <text x="315" y="1015" font-family="Inter, sans-serif" font-size="13" font-weight="900" fill="#1d4ed8" letter-spacing="0.4">
+              ▲ START TURNU BABILONULUI (R0)
+            </text>
+            <text x="585" y="1015" font-family="Inter, sans-serif" font-size="13" font-weight="900" fill="#dc2626" letter-spacing="0.4">
+              ▲ START CANGURU ȘCHIOP (R00 → R0)
+            </text>
+          </svg>
+        </div>
+
+        <div id="desc-col" class="lg:col-span-5 flex flex-col gap-2.5 text-[10.8px] leading-[1.38] text-slate-800">
+          
+          <!-- BOX 1: TURNU BABILONULUI (4 LC) -->
+          <section class="border-2 border-blue-700 rounded-lg overflow-hidden bg-white">
+            <div class="bg-blue-700 text-white px-2.5 py-1.5 flex items-center justify-between">
+              <h3 class="font-black text-xs uppercase tracking-wide">1. Traseul Turnu Babilonului (4 LC)</h3>
+              <span class="mono text-[10px] font-bold bg-blue-900 px-1.5 py-0.5 rounded">4A | 7+ UIAA | ~130m</span>
+            </div>
+            <div class="p-2.5 space-y-1.5">
+              <p class="text-[10px] text-slate-600 italic border-b border-slate-200 pb-1">
+                <strong>Premieră:</strong> 1986, Adrian &amp; Gina Păută. <strong>Echipament:</strong> Coardă 50–60 m (sau semicorzi pt. reducerea frecării în L2), 15–18 bucle (inclusiv bucle lungi), anouri.
+              </p>
+
+              <div id="card-babilon-l1" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-blue-900 flex justify-between">
+                  <span>L1: R0 → R1 (lângă pom)</span>
+                  <span class="mono text-blue-700">30 m | 7- (5+, 6-, 7-, 5+)</span>
+                </div>
+                <p class="mt-0.5">
+                  Parcurge linia arcuită a unei creste destul de tehnice (<span class="mono font-bold">5+, 6-</span>), urmată de praguri (uneori cu iarbă), un pasaj de <span class="mono font-bold">7-</span> și un scurt diedru (<span class="mono font-bold">5+</span>) care ne scoate pe un prag comod, lângă un pom, unde regrupăm (<strong>R1</strong>).
+                </p>
+              </div>
+
+              <div id="card-babilon-l2" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-blue-900 flex justify-between">
+                  <span>L2: R1 → R1/2 → R2 (sub tavan)</span>
+                  <span class="mono text-blue-700">50 m | 5+, 6-, 5+, 5-</span>
+                </div>
+                <p class="mt-0.5">
+                  Succesiune de diedre și praguri cu tendință spre dreapta (<span class="mono font-bold">5+, 6-, 5+</span>), urmată de un <strong>traverseu lung de 30 m spre dreapta</strong> pe fețe căzute și praguri (unele descendente, <span class="mono font-bold">5-</span>) până sub tavanul bine conturat.
+                </p>
+                <p class="mt-1 text-[10px] bg-amber-50 border-l-2 border-amber-500 pl-1.5 py-0.5 text-amber-950">
+                  <strong>Tactică &amp; Siguranță L2:</strong> Lungime întinsă (&gt;50 m), grea pentru secund (<strong>risc de pendul periculos</strong> dacă se sar asigurări!). La mijlocul traverseului întâlnește linia din <em>Canguru Șchiop</em> (<strong>R1/2 romb roșu</strong>): capul poate regrupa provizoriu aici, secundul urcă până la începutul traverseului (restabilind contactul vizual), apoi capul continuă lejer până sub stânga tavanului (<strong>R2</strong>).
+                </p>
+              </div>
+
+              <div id="card-shared-roof" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-blue-900 flex justify-between">
+                  <span>L3 (Babilon) / L4 (Canguru): Tavanul Mare</span>
+                  <span class="mono text-red-700">25 m | 7+, 7-, 6+, 5-, 4-</span>
+                </div>
+                <p class="mt-0.5">
+                  Traversăm spre dreapta chiar pe sub tavan într-o <strong>bavareză răsturnată / prize inverse</strong> (<span class="mono font-bold">7+</span>), iar din buza tavanului intrăm într-un diedru deschis și ușor surplombat (<span class="mono font-bold">7-</span>), urmat de o față expusă cu prize mici (<span class="mono font-bold">6+</span>). După o brână mică și incomodă, trecem o mică surplombă (<span class="mono font-bold">5-</span>) și ieșim pe creastă (<span class="mono font-bold">4-</span>). Continuăm peste săritori și o porțiune orizontală spre dreapta până pe o brână comodă, sub un diedru barat de un tăvănel (<strong>R3 Bab. / R4 Cang.</strong>).
+                </p>
+              </div>
+
+              <div id="card-shared-top" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-blue-900 flex justify-between">
+                  <span>L4 (Babilon) / L5 (Canguru): Tăvănel &amp; Vârf</span>
+                  <span class="mono text-blue-700">25 m | 5-, 6+, 4+, 3-</span>
+                </div>
+                <p class="mt-0.5">
+                  Urcăm pe diedrul curat ușor spre stânga (<span class="mono font-bold">5-</span>) până sub tăvănel, traversăm scurt la dreapta pe sub el și ieșim la echilibru pe o față ușor surplombată (<span class="mono font-bold">6+</span>). Prindem creasta din stânga (<span class="mono font-bold">4+</span>), unde stânca pierde din verticalitate (<span class="mono font-bold">3-</span>), continuând până pe tancul somital (<strong>R4 Bab. / R5 Cang.</strong> — regrupare comună cu <em>Soroș, Tinereții, Eva, Trandafirul Sălbatic</em>).
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- BOX 2: CANGURU ȘCHIOP (5 LC) -->
+          <section class="border-2 border-red-600 rounded-lg overflow-hidden bg-white">
+            <div class="bg-red-600 text-white px-2.5 py-1.5 flex items-center justify-between">
+              <h3 class="font-black text-xs uppercase tracking-wide">2. Traseul Canguru Șchiop (5 LC scurte)</h3>
+              <span class="mono text-[10px] font-bold bg-red-900 px-1.5 py-0.5 rounded">4B | 8- UIAA | ~130m</span>
+            </div>
+            <div class="p-2.5 space-y-1.5">
+              <p class="text-[10px] text-slate-600 italic border-b border-slate-200 pb-1">
+                <strong>Premieră:</strong> 1998, Adrian Păută, Ștefan Soloși, Raluca Păută. Variantă directă pe peretele curat; echipat cu spituri și pitoane. Recomandat în echipă de 2, în 5 lungimi scurte (coardă 50 m, 20 bucle scurte).
+              </p>
+
+              <div id="card-canguru-acces" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-red-900 flex justify-between">
+                  <span>Acces: R00 (potecă) → R0 (grotă)</span>
+                  <span class="mono text-red-700">10* m | 3-, 2-</span>
+                </div>
+                <p class="mt-0.5">
+                  Pornește din potecă (<strong>R00</strong>) pe săritori pământoase spre stânga (cordeline fixe pt. noroi), apoi pe un vâlcel spre dreapta până la baza unei mici grote, lângă un copac (<strong>R0</strong>). Drept în sus prin stânga grotei pleacă <em>Canguru Șchiop</em> (iar înclinat spre dreapta pleacă <em>Traseul Tinereții</em>).
+                </p>
+              </div>
+
+              <div id="card-canguru-l1" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-red-900 flex justify-between">
+                  <span>L1: R0 → R1 (mijlocul traverseului)</span>
+                  <span class="mono text-red-700">20 m | 7- / 7+</span>
+                </div>
+                <p class="mt-0.5">
+                  Început relaxat pe prize mari, apoi fața devine spălată. Ușoară deviere stânga, apoi dreapta sub o <strong>burtă cu puține prize</strong> (<span class="mono font-bold">7- / 7+</span>, pas greu la echilibru — <em>nu deviați prea mult în stânga!</em>). Spitul de după burtă nu se vede de jos, dar există 2–3 spituri intermediare, deci atacați drept în sus. După alte 2–3 asigurări începe traverseul spre dreapta până în <strong>R1</strong> (spit cu ureche triunghiulară mare + spit normal).
+                </p>
+              </div>
+
+              <div id="card-canguru-l2" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-red-900 flex justify-between">
+                  <span>L2: R1 → R2 (joncțiunea cu Babilonul)</span>
+                  <span class="mono text-red-700">25 m | 8- (7+, 8-, 7+, 7-)</span>
+                </div>
+                <p class="mt-0.5">
+                  Traverseul continuă câțiva metri spre dreapta (<span class="mono font-bold">7+</span>), apoi urcăm într-un <strong>diedru expus și susținut</strong> (<span class="mono font-bold">8-</span> pas cheie, apoi <span class="mono font-bold">7+</span>; spituri dese la sub 2 m). Urmează o față ușor căzută cu prize generoase și iarbă (<span class="mono font-bold">7-</span>) până la intersecția cu <em>Turnu Babilonului</em>. <strong>R2:</strong> inel mare + spit cu ureche triunghiulară (posibil rapel fracționat de aici cu 15 bucle).
+                </p>
+              </div>
+
+              <div id="card-shared-traverse" class="p-1.5 rounded bg-slate-50 border border-slate-200 transition">
+                <div class="font-extrabold text-red-900 flex justify-between">
+                  <span>L3 (Canguru): R2 → R3 (sub tavan)</span>
+                  <span class="mono text-red-700">20 m | 5- (comun Babilon L2b)</span>
+                </div>
+                <p class="mt-0.5">
+                  Continuă traverseul comun spre dreapta (~20 m, <span class="mono font-bold">5-</span>) până sub stânga tavanului mare (<strong>R3 Canguru / R2 Babilon</strong>). <strong>L4</strong> și <strong>L5</strong> sunt comune cu <strong>L3</strong> și <strong>L4</strong> din <em>Turnu Babilonului</em>.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- BOX 3: ORIENTARE CRITICĂ & RETRAGERE -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="border border-amber-500 bg-amber-50/80 rounded-lg p-2">
+              <div class="font-black text-amber-900 text-[10.5px] uppercase flex items-center gap-1">
+                <span>⚠️ Capcană de Orientare</span>
+              </div>
+              <p class="text-[10px] text-amber-950 mt-0.5">
+                La <strong>3 m mai jos și 2 m mai la dreapta</strong> de regruparea de sub tavan (R2 Bab. / R3 Cang.) se află regruparea din <strong>Traseul Tinereții</strong>. Nu deviați spre ea!
+              </p>
+            </div>
+            <div class="border border-emerald-600 bg-emerald-50/80 rounded-lg p-2">
+              <div class="font-black text-emerald-900 text-[10.5px] uppercase">
+                🌲 Retragere de pe Vârf
+              </div>
+              <p class="text-[10px] text-emerald-950 mt-0.5">
+                Din <strong>R4 / R5 (Tancul din Amfiteatru)</strong> se iese fără probleme în pădure și se coboară pe poteca marcată spre Peștera Vadului.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SHEET FOOTER -->
+      <footer class="mt-2 pt-1.5 border-t border-slate-300 flex items-center justify-between text-[9.5px] text-slate-500">
+        <div>
+          <strong>Sursă date &amp; schițe originale:</strong> Adrian Păută, Gina Păută, Ștefan Soloși, Raluca Păută • Reconstrucție vectorială fidelă 1:1.
+        </div>
+        <div class="mono font-semibold text-slate-700">
+          Vadu Crișului • Pereții Mari • Format A4 Printabil
+        </div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script>
+    // Dictionary of pitch details for interactive inspection
+    const pitchDetails = {
+      'babilon-l1': {
+        title: 'Turnu Babilonului — L1 (30 m, grad 7-)',
+        desc: 'Pleacă din R0 pe linia arcuită a crestei tehnice (5+, 6-), trece praguri înierbate, o surplombă/nișă (7-) și un scurt diedru (5+) până pe pragul comod lângă pom (R1).',
+        cardId: 'card-babilon-l1'
+      },
+      'babilon-l2': {
+        title: 'Turnu Babilonului — L2 (50 m, grad 6- / traverseu 5-)',
+        desc: 'Din R1 urcă diedre și praguri spre dreapta (5+, 6-, 5+) fără a atinge R1 Canguru, apoi intră în traverseul de 30m. Regrupare provizorie recomandată la R1/2 (romb roșu) pentru a evita frecarea și pendulul secundului!',
+        cardId: 'card-babilon-l2'
+      },
+      'canguru-acces': {
+        title: 'Canguru Șchiop — Acces R00 → R0 (10* m, grad 3- / 2-)',
+        desc: 'Din potecă (R00) pe săritori pământoase spre stânga (cordeline fixe), apoi vâlcel spre dreapta până la baza micii grote, lângă copac (R0).',
+        cardId: 'card-canguru-acces'
+      },
+      'canguru-l1': {
+        title: 'Canguru Șchiop — L1 (20 m, grad 7- / 7+)',
+        desc: 'Față curată spălată, pas cheie la echilibru sub o burtă cu prize puține (7- / 7+; spitul de deasupra e ascuns vederii, nu deviați în stânga!). Traverseu spre dreapta până în R1.',
+        cardId: 'card-canguru-l1'
+      },
+      'canguru-l2': {
+        title: 'Canguru Șchiop — L2 (25 m, Crux 8-)',
+        desc: 'Scurt traverseu dreapta (7+), apoi diedru expus și susținut (8- / 7+, spituri dese la <2 m), urmat de o față căzută cu iarbă (7-) până în R2 (joncțiunea cu Babilonul).',
+        cardId: 'card-canguru-l2'
+      },
+      'shared-traverse': {
+        title: 'Secțiune Comună — Traverseul spre Tavan (20 m, grad 5-)',
+        desc: 'De la joncțiunea R1/2 (Babilon) / R2 (Canguru), traseele reunite traversează 20 m spre dreapta (5-) până în R2 (Bab.) / R3 (Cang.), chiar sub latura stângă a tavanului mare.',
+        cardId: 'card-shared-traverse'
+      },
+      'shared-roof': {
+        title: 'Secțiune Comună — L3 Babilon / L4 Canguru (25 m, grad 7+ / 7-)',
+        desc: 'Traversare sub tavan în bavareză răsturnată pe prize inverse (7+), ieșire prin diedrul deschis ușor surplombat (7-) și față cu prize mici (6+), apoi brână mică, surplombă (5-) și creastă (4-) până în R3/R4.',
+        cardId: 'card-shared-roof'
+      },
+      'shared-top': {
+        title: 'Secțiune Comună — L4 Babilon / L5 Canguru (25 m, grad 6+)',
+        desc: 'Urcare pe diedrul curat spre stânga (5-), traversare scurtă dreapta pe sub tăvănel și ieșire pe față (6+), apoi pe creasta din stânga (4+, 3-) până pe tancul comun R4/R5.',
+        cardId: 'card-shared-top'
+      }
+    };
+
+    function inspectPitch(key) {
+      const info = pitchDetails[key];
+      if (!info) return;
+
+      const inspectorText = document.getElementById('inspector-text');
+      inspectorText.innerHTML = `<strong class="text-amber-300">${info.title}:</strong> ${info.desc}`;
+
+      // Highlight matching card in the right panel
+      document.querySelectorAll('[id^="card-"]').forEach(el => {
+        el.classList.remove('ring-2', 'ring-amber-500', 'bg-amber-50/70');
+      });
+      const targetCard = document.getElementById(info.cardId);
+      if (targetCard) {
+        targetCard.classList.add('ring-2', 'ring-amber-500', 'bg-amber-50/70');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // Filter between Both Routes, Only Babilon, or Only Canguru
+    function setRouteMode(mode) {
+      const babilonGroup = document.getElementById('route-babilon-only');
+      const canguruGroup = document.getElementById('route-canguru-only');
+
+      const btnBoth = document.getElementById('btn-mode-both');
+      const btnBab = document.getElementById('btn-mode-babilon');
+      const btnCang = document.getElementById('btn-mode-canguru');
+
+      [btnBoth, btnBab, btnCang].forEach(b => {
+        b.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+      });
+
+      babilonGroup.classList.remove('dimmed');
+      canguruGroup.classList.remove('dimmed');
+
+      if (mode === 'babilon') {
+        canguruGroup.classList.add('dimmed');
+        btnBab.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+      } else if (mode === 'canguru') {
+        babilonGroup.classList.add('dimmed');
+        btnCang.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+      } else {
+        btnBoth.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+      }
+    }
+
+    // Switch between Complete A4 Sheet (Topo + Descriptions) and Full-Page Large Vector Topo
+    function setSheetLayout(layout) {
+      const topoCol = document.getElementById('topo-col');
+      const descCol = document.getElementById('desc-col');
+      const btnFull = document.getElementById('btn-layout-full');
+      const btnTopo = document.getElementById('btn-layout-topo');
+
+      if (layout === 'large-topo') {
+        topoCol.className = 'lg:col-span-12 border border-slate-300 rounded-lg bg-white p-2 relative';
+        descCol.classList.add('hidden');
+        btnTopo.className = 'px-2.5 py-1.5 rounded-md font-semibold bg-slate-700 text-white transition';
+        btnFull.className = 'px-2.5 py-1.5 rounded-md font-semibold text-slate-300 hover:text-white transition';
+      } else {
+        topoCol.className = 'lg:col-span-7 border border-slate-300 rounded-lg bg-white p-1 relative';
+        descCol.classList.remove('hidden');
+        btnFull.className = 'px-2.5 py-1.5 rounded-md font-semibold bg-slate-700 text-white transition';
+        btnTopo.className = 'px-2.5 py-1.5 rounded-md font-semibold text-slate-300 hover:text-white transition';
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('status-toast');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    // Download standalone clean Vector SVG file
+    function downloadSVG() {
+      try {
+        const svgEl = document.getElementById('climbing-topo-svg');
+        const serializer = new XMLSerializer();
+        let source = serializer.serializeToString(svgEl);
+
+        if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+          source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+        }
+        source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+        const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'topo-turnu-babilonului-canguru-schiop.svg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('✓ Fișierul SVG vectorial a fost descărcat!');
+      } catch (err) {
+        console.error('Eroare la exportul SVG:', err);
+      }
+    }
+
+    // Render Vector SVG to High-Resolution PNG (2640 x 3090 px) and download
+    function downloadPNG() {
+      try {
+        const svgEl = document.getElementById('climbing-topo-svg');
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgEl);
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        const img = new Image();
+        img.onload = function () {
+          const scale = 3; // 3x scale for crisp 300 DPI print quality
+          const canvas = document.createElement('canvas');
+          canvas.width = 880 * scale;
+          canvas.height = 1030 * scale;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          URL.revokeObjectURL(url);
+          canvas.toBlob(function (pngBlob) {
+            const pngUrl = URL.createObjectURL(pngBlob);
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = 'topo-turnu-babilonului-canguru-schiop-HD.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(pngUrl);
+            showToast('✓ Imaginea PNG (Rezoluție Mare) a fost descărcată!');
+          }, 'image/png');
+        };
+        img.src = url;
+      } catch (err) {
+        console.error('Eroare la exportul PNG:', err);
+      }
+    }
+  </script>
+</body>
+</html>
